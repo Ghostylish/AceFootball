@@ -75,12 +75,20 @@ public class MainActivity extends AppCompatActivity {
                         //matches.add(new Match(element.select(".link").attr("href"), element.select(".link").attr("title")));
                         Log.d("myLog", "Матч: " + element.select(".link").attr("title"));
                         Log.d("myLog", "Ссылка: " + element.select(".link").attr("href"));
+                        Log.d("myLog", "Команда дома: " + element.select(".name").first().text());
+                        Log.d("myLog", "Команда гости: " + element.select(".name").get(1).text());
                         if (element.select(".img").attr("src").contains("http"))
-                        Log.d("myLog", "Картинка1: " + element.select(".img").attr("src"));
+                        {
+                            Log.d("myLog", "Картинка1: " + element.select(".img").attr("src"));
+                        }
                         else  Log.d("myLog", "Картинка1: " + "http://www.lfootball.ws/" + element.select(".img").attr("src"));
                         if (element.select(".img").get(1).attr("src").contains("http"))
-                        Log.d("myLog", "Картинка2: " + element.select(".img").get(1).attr("src"));
+                        {
+                            Log.d("myLog", "Картинка2: " + element.select(".img").get(1).attr("src"));
+                        }
                         else Log.d("myLog", "Картинка2: " + "http://www.lfootball.ws/" + element.select(".img").get(1).attr("src"));
+                        Log.d("myLog", "Лига: " + element.select(".liga").text());
+                        Log.d("myLog", "Дата: " + element.select(".date").text());
                     }
                 }
 
