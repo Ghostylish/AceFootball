@@ -20,16 +20,18 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.w3c.dom.Document;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,10 +43,10 @@ import java.util.logging.StreamHandler;
 
 public class MainActivity extends AppCompatActivity {
 
-
     ArrayList<Match> matches = new ArrayList<Match>();
     ArrayList<String> menuListDialog = new ArrayList<String>();
     BoxAdapter boxAdapter;
+    org.jsoup.nodes.Document doc;
     int _position = 0;
     final int ID_QUALITY = 0;
 
@@ -109,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
         AdapterView.OnItemClickListener adapterViewListener = new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
+                //findViewById(R.id.loading).setVisibility(View.VISIBLE);
                 _position = position;
                 AceObject ao = new AceObject();
                 ao.execute();
@@ -118,9 +121,8 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 showDialog(ID_QUALITY);
-               // Intent intent = new Intent(MainActivity.this, TestActivity.class);
                 Log.d("Position", "Позиция" + matches.get(position).commandGuest);
-                //startActivity(intent);
+               // findViewById(R.id.loading).setVisibility(View.GONE);
             }
         };
         lvMain.setOnItemClickListener(adapterViewListener);
@@ -128,44 +130,40 @@ public class MainActivity extends AppCompatActivity {
     }
     //этот класс необходим для парсинга самой страницы с id-трансляций
     class AceObject extends AsyncTask<Void, Void, Void>{
+
         @Override
         protected Void doInBackground(Void... params) {
-
-            org.jsoup.nodes.Document doc = null;
+            org.jsoup.nodes.Document doc;
             try {
                 //Считываем выбранную страницу по индексу
-                doc = Jsoup.connect(matches.get(_position).url).get();
+                /*doc = Jsoup.connect(matches.get(_position).url).get();
                 Elements elements = doc.select(".translation-item");
                 Log.d("myLog", "парсим меню");
                 if (doc != null) {
                     for (Element element : elements) {
                         menuListDialog.add(element.text());
                         Log.d("myLog", element.text());
-                       /* matches.add(new Match(element.select(".name").first().text(), element.select(".name").get(1).text(), element.select(".img").attr("src"),
-                                element.select(".img").get(1).attr("src"), element.select(".date").text(), element.select(".liga").text(), element.select(".link").attr("href")));
-                        //Log.d("myLog", "Матч: " + element.select(".link").attr("title"));
-                        Log.d("myLog", "Ссылка: " + element.select(".link").attr("href"));
-                        Log.d("myLog", "Команда дома: " + element.select(".name").first().text());
-                        Log.d("myLog", "Команда гости: " + element.select(".name").get(1).text());
-                        if (element.select(".img").attr("src").contains("http"))
-                        {
-                            Log.d("myLog", "Картинка1: " + element.select(".img").attr("src"));
-                        }
-                        else  Log.d("myLog", "Картинка1: " + "http://www.lfootball.ws/" + element.select(".img").attr("src"));
-                        if (element.select(".img").get(1).attr("src").contains("http"))
-                        {
-                            Log.d("myLog", "Картинка2: " + element.select(".img").get(1).attr("src"));
-                        }
-                        else Log.d("myLog", "Картинка2: " + "http://www.lfootball.ws/" + element.select(".img").get(1).attr("src"));
-                        Log.d("myLog", "Лига: " + element.select(".liga").text());
-                        if (element.select(".date").text()!= "")
-                            Log.d("myLog", "Дата: " + element.select(".date").text());
-                        else Log.d("myLog", "Дата: " + "Live");*/
+                    }
+                }*/
+
+
+
+                //Считываем выбранную страницу по индексу
+                doc = Jsoup.connect(matches.get(_position).url).get();
+                if (doc != null) {
+                Element table = doc.select(".live-table").first();
+                Log.d("myLog", "парсим таблицу");
+                    Elements tableRows = table.select("tr").select("td");
+                    for (Element row : tableRows) {
+                        menuListDialog.add(row.text());
+                        Log.d("SUPER", row.select("td").get(3).text());
                     }
                 }
 
+
             } catch (IOException e) {
                 //Если не получилось считать
+                Toast.makeText(MainActivity.this, "Что-то не так", Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
             return null;
@@ -174,11 +172,9 @@ public class MainActivity extends AppCompatActivity {
 
     class MyTask extends AsyncTask<Void, Void, Void> {
 
-
         @Override
         protected Void doInBackground(Void... params) {
 
-            org.jsoup.nodes.Document doc = null;
             try {
                 //Считываем заглавную страницу www.lfootball.ws
                 doc = Jsoup.connect("http://www.lfootball.ws/").get();
