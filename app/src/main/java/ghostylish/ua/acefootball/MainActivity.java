@@ -8,6 +8,8 @@ import android.graphics.Color;
 import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -44,14 +46,18 @@ import java.util.logging.StreamHandler;
 public class MainActivity extends AppCompatActivity {
 
     ArrayList<Match> matches = new ArrayList<Match>();
-    ArrayList<String> menuListDialog = new ArrayList<String>();
+    public static ArrayList<String> menuListDialog = new ArrayList<String>();
+    public static ArrayList<String> idListAceStream = new ArrayList<String>();
+    public String[] menuDialog;
     BoxAdapter boxAdapter;
     org.jsoup.nodes.Document doc;
     int _position = 0;
     final int ID_QUALITY = 0;
 
+    DialogFragment dlg1;
 
-    @Override
+
+   /* @Override
     protected Dialog onCreateDialog(int id) {
         switch (id) {
             case ID_QUALITY:
@@ -80,20 +86,28 @@ public class MainActivity extends AppCompatActivity {
             default:
                 return null;
         }
-    }
+    }*/
+
+   /* @Override
+    protected void onPrepareDialog(int id, Dialog dialog) {
+        super.onPrepareDialog(id, dialog);
+    }*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // создаем задачу
+        dlg1 = new layout.DialogFragment();
+
+        //создаем задачу
         MyTask mt = new MyTask();
+        //запускаем задачу
         mt.execute();
 
-        //пауза в 5 секунд пока загрухятся данные
+        //пауза в 5 секунд пока загрузятся данные
         try {
-            TimeUnit.SECONDS.sleep(5);
+            TimeUnit.SECONDS.sleep(8);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -111,16 +125,16 @@ public class MainActivity extends AppCompatActivity {
         AdapterView.OnItemClickListener adapterViewListener = new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                //findViewById(R.id.loading).setVisibility(View.VISIBLE);
                 _position = position;
                 AceObject ao = new AceObject();
                 ao.execute();
-                try {
+
+                /*try {
                     TimeUnit.SECONDS.sleep(2);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }
-                showDialog(ID_QUALITY);
+                }*/
+                //showDialog(ID_QUALITY);
                 Log.d("Position", "Позиция" + matches.get(position).commandGuest);
                // findViewById(R.id.loading).setVisibility(View.GONE);
             }
@@ -130,10 +144,16 @@ public class MainActivity extends AppCompatActivity {
     }
     //этот класс необходим для парсинга самой страницы с id-трансляций
     class AceObject extends AsyncTask<Void, Void, Void>{
+        @Override
+        protected void onPostExecute(Void aVoid) {
+    //        showDialog(ID_QUALITY);
+                FragmentManager manager = getSupportFragmentManager();
+                dlg1.show(manager, "dlg1");
+        }
 
         @Override
         protected Void doInBackground(Void... params) {
-            org.jsoup.nodes.Document doc;
+            //org.jsoup.nodes.Document doc;
             try {
                 //Считываем выбранную страницу по индексу
                 /*doc = Jsoup.connect(matches.get(_position).url).get();
@@ -149,16 +169,31 @@ public class MainActivity extends AppCompatActivity {
 
 
                 //Считываем выбранную страницу по индексу
-                doc = Jsoup.connect(matches.get(_position).url).get();
+                doc = Jsoup.connect(matches.get(_position).url).userAgent("Mozilla").get();
                 if (doc != null) {
-                Element table = doc.select(".live-table").first();
-                Log.d("myLog", "парсим таблицу");
+                    //если нет трансляций то ничего не делаем
+                    if (doc.select(".live-table").first() != null){
+                    Element table = doc.select(".live-table").first();
+                    Elements tableRows = table.select("tr");
+                    tableRows.remove(0);
+                    for (Element tr: tableRows){
+                        if(tr.select("td").get(1).text().contains("SopCast")) continue;
+                        menuListDialog.add(tr.select("td").get(3).text());
+                        idListAceStream.add(tr.select("td").get(7).child(0).attr("href"));
+                    }
+                }
+
+                }
+
+
+
+                /*Log.d("myLog", "парсим таблицу");
                     Elements tableRows = table.select("tr").select("td");
                     for (Element row : tableRows) {
                         menuListDialog.add(row.text());
-                        Log.d("SUPER", row.select("td").get(3).text());
+                       // Log.d("SUPER", row.select("td").get(3).text());
                     }
-                }
+                }*/
 
 
             } catch (IOException e) {
