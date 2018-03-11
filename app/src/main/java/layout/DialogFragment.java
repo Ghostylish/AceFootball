@@ -44,13 +44,14 @@ public class DialogFragment extends android.support.v4.app.DialogFragment implem
         }
         //чистим menuListDialog в классе MainActivity для того что бы удалить старые записи
         ldv.menuListDialog.clear();
+        ldv.idListAceStream.clear();
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, menuDialog);
         ListView listView = v.findViewById(R.id.lvDialog);
         listView.setAdapter(adapter);
         AdapterView.OnItemClickListener adapterViewListener = new AdapterView.OnItemClickListener(){
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                intent = new Intent("org.acestream.engine.service.AceStreamEngineService", Uri.parse(idAceStream[position]));
+                intent = new Intent("android.intent.action.VIEW", Uri.parse(idAceStream[position]));
                 startActivity(intent);
                 Toast.makeText(getContext(), menuDialog[position], Toast.LENGTH_SHORT).show();
                 dismiss();

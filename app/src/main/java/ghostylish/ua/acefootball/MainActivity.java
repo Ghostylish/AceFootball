@@ -52,52 +52,18 @@ public class MainActivity extends AppCompatActivity {
     BoxAdapter boxAdapter;
     org.jsoup.nodes.Document doc;
     int _position = 0;
-    final int ID_QUALITY = 0;
+    ListView lvMain;
 
     DialogFragment dlg1;
+    ProgressBar prBar;
 
-
-   /* @Override
-    protected Dialog onCreateDialog(int id) {
-        switch (id) {
-            case ID_QUALITY:
-
-                //Конвертируем коллекцию в массив строк
-                final String[] menuDialog = new String[menuListDialog.size()];
-                for (int i = 0; i != menuListDialog.size(); i++) {
-                    menuDialog[i] = menuListDialog.get(i);
-                }
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Выберите трансляцию"); // заголовок для диалога
-
-                builder.setItems(menuDialog, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int item) {
-                        // TODO Auto-generated method stub
-                        Toast.makeText(getApplicationContext(),
-                                "Выбранный кот: " + menuDialog[item],
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
-                builder.setCancelable(true);
-                return builder.create();
-
-            default:
-                return null;
-        }
-    }*/
-
-   /* @Override
-    protected void onPrepareDialog(int id, Dialog dialog) {
-        super.onPrepareDialog(id, dialog);
-    }*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        prBar = (ProgressBar) findViewById(R.id.progressBar);
         dlg1 = new layout.DialogFragment();
 
         //создаем задачу
@@ -105,20 +71,14 @@ public class MainActivity extends AppCompatActivity {
         //запускаем задачу
         mt.execute();
 
-        //пауза в 5 секунд пока загрузятся данные
-        try {
-            TimeUnit.SECONDS.sleep(8);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        boxAdapter = new BoxAdapter(this, matches);
         // настраиваем список
-        ListView lvMain = (ListView) findViewById(R.id.lvMain);
-        lvMain.setAdapter(boxAdapter);
+        lvMain = (ListView) findViewById(R.id.lvMain);
+        prBar.setVisibility(View.VISIBLE);
 
 
 
-        /*  parent – View-родитель для нажатого пункта, в нашем случае - ListView
+
+          /*parent – View-родитель для нажатого пункта, в нашем случае - ListView
             view – это нажатый пункт, в нашем случае – TextView из android.R.layout.simple_list_item_1
             position – порядковый номер пункта в списке
             id – идентификатор элемента,*/
@@ -128,72 +88,37 @@ public class MainActivity extends AppCompatActivity {
                 _position = position;
                 AceObject ao = new AceObject();
                 ao.execute();
+                //Log.d("Position", "Позиция" + matches.get(position).commandGuest);
 
-                /*try {
-                    TimeUnit.SECONDS.sleep(2);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }*/
-                //showDialog(ID_QUALITY);
-                Log.d("Position", "Позиция" + matches.get(position).commandGuest);
-               // findViewById(R.id.loading).setVisibility(View.GONE);
             }
         };
         lvMain.setOnItemClickListener(adapterViewListener);
 
     }
     //этот класс необходим для парсинга самой страницы с id-трансляций
-    class AceObject extends AsyncTask<Void, Void, Void>{
-        @Override
-        protected void onPostExecute(Void aVoid) {
-    //        showDialog(ID_QUALITY);
-                FragmentManager manager = getSupportFragmentManager();
-                dlg1.show(manager, "dlg1");
-        }
+    class AceObject extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected Void doInBackground(Void... params) {
-            //org.jsoup.nodes.Document doc;
+
             try {
-                //Считываем выбранную страницу по индексу
-                /*doc = Jsoup.connect(matches.get(_position).url).get();
-                Elements elements = doc.select(".translation-item");
-                Log.d("myLog", "парсим меню");
-                if (doc != null) {
-                    for (Element element : elements) {
-                        menuListDialog.add(element.text());
-                        Log.d("myLog", element.text());
-                    }
-                }*/
-
-
 
                 //Считываем выбранную страницу по индексу
                 doc = Jsoup.connect(matches.get(_position).url).userAgent("Mozilla").get();
                 if (doc != null) {
                     //если нет трансляций то ничего не делаем
-                    if (doc.select(".live-table").first() != null){
-                    Element table = doc.select(".live-table").first();
-                    Elements tableRows = table.select("tr");
-                    tableRows.remove(0);
-                    for (Element tr: tableRows){
-                        if(tr.select("td").get(1).text().contains("SopCast")) continue;
-                        menuListDialog.add(tr.select("td").get(3).text());
-                        idListAceStream.add(tr.select("td").get(7).child(0).attr("href"));
+                    if (doc.select(".live-table").first() != null) {
+                        Element table = doc.select(".live-table").first();
+                        Elements tableRows = table.select("tr");
+                        tableRows.remove(0);
+                        for (Element tr : tableRows) {
+                            if (tr.select("td").get(1).text().contains("SopCast")) continue;
+                            menuListDialog.add(tr.select("td").get(3).text());
+                            idListAceStream.add(tr.select("td").get(7).child(0).attr("href"));
+                        }
                     }
-                }
 
                 }
-
-
-
-                /*Log.d("myLog", "парсим таблицу");
-                    Elements tableRows = table.select("tr").select("td");
-                    for (Element row : tableRows) {
-                        menuListDialog.add(row.text());
-                       // Log.d("SUPER", row.select("td").get(3).text());
-                    }
-                }*/
 
 
             } catch (IOException e) {
@@ -202,13 +127,23 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             return null;
+
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            if (menuListDialog.isEmpty() == false) {
+                FragmentManager manager = getSupportFragmentManager();
+                dlg1.show(manager, "dlg1");
+            } else
+                Toast.makeText(MainActivity.this, "Трансляция не началась", Toast.LENGTH_SHORT).show();
         }
     }
 
-    class MyTask extends AsyncTask<Void, Void, Void> {
+    class MyTask extends AsyncTask<Void, Void, ArrayList<Match>> {
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected ArrayList<Match> doInBackground(Void... params) {
 
             try {
                 //Считываем заглавную страницу www.lfootball.ws
@@ -219,24 +154,6 @@ public class MainActivity extends AppCompatActivity {
 
                         matches.add(new Match(element.select(".name").first().text(), element.select(".name").get(1).text(), element.select(".img").attr("src"),
                                 element.select(".img").get(1).attr("src"), element.select(".date").text(), element.select(".liga").text(), element.select(".link").attr("href")));
-                        //Log.d("myLog", "Матч: " + element.select(".link").attr("title"));
-                        Log.d("myLog", "Ссылка: " + element.select(".link").attr("href"));
-                        Log.d("myLog", "Команда дома: " + element.select(".name").first().text());
-                        Log.d("myLog", "Команда гости: " + element.select(".name").get(1).text());
-                        if (element.select(".img").attr("src").contains("http"))
-                        {
-                            Log.d("myLog", "Картинка1: " + element.select(".img").attr("src"));
-                        }
-                        else  Log.d("myLog", "Картинка1: " + "http://www.lfootball.ws/" + element.select(".img").attr("src"));
-                        if (element.select(".img").get(1).attr("src").contains("http"))
-                        {
-                            Log.d("myLog", "Картинка2: " + element.select(".img").get(1).attr("src"));
-                        }
-                        else Log.d("myLog", "Картинка2: " + "http://www.lfootball.ws/" + element.select(".img").get(1).attr("src"));
-                        Log.d("myLog", "Лига: " + element.select(".liga").text());
-                        if (element.select(".date").text()!= "")
-                        Log.d("myLog", "Дата: " + element.select(".date").text());
-                        else Log.d("myLog", "Дата: " + "Live");
                     }
                 }
 
@@ -245,48 +162,23 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            return null;
+            return matches;
         }
 
-        //рабочий вариант
-       /* protected Void doInBackground(Void... params) {
-
-            org.jsoup.nodes.Document doc = null;
-            try {
-                //Считываем заглавную страницу www.lfootball.ws
-                doc = Jsoup.connect("http://www.lfootball.ws/").get();
-                Elements elements = doc.select(".eventsListUl").select(".fl").select(".link");
-                if (doc != null) {
-                    for (Element element : elements) {
-
-                       //matches.add(new Match(element.attr("href").toString(), element.attr("title")));
-                        Log.d("myLog", "Матч: " + element.attr("title"));
-                        Log.d("myLog", "Ссылка: " + element.attr("href").toString());
-                    }
-                }
-
-            } catch (IOException e) {
-                //Если не получилось считать
-                e.printStackTrace();
-            }
-
-            return null;
-        }*/
 
 
         @Override
-        protected void onPostExecute(Void result) {
+        protected void onPostExecute(ArrayList<Match> result) {
             super.onPostExecute(result);
-            if(matches==null){
+            if(matches.isEmpty()==true){
                 Toast.makeText(MainActivity.this, "Данные не загружены", Toast.LENGTH_SHORT).show();
             }
             Toast.makeText(MainActivity.this, "Супер", Toast.LENGTH_SHORT).show();
-            //отсюда мы можем передать наш массив с урлами картинок
-            //for (int i=0;i<=titleMatch.size();i++){
-             //  Log.d("Из списка", titleMatch.get(i).toString());
-           // }
 
-            //Toast.makeText(MainActivity.this, "onPostExecute", Toast.LENGTH_LONG).show();
+            boxAdapter = new BoxAdapter(MainActivity.this, result);
+            lvMain.setAdapter(boxAdapter);
+            prBar.setVisibility(View.GONE);
+
         }
     }
 
